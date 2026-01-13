@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Folken Games Token Prep</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Folken Games Token Prep</h1>
+            <p class="subtitle">Automated RPG Token Generator</p>
+        </header>
+
+        <main>
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-content">
+                    <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    <p class="upload-text">Drag and drop an image here</p>
+                    <p class="upload-hint">or click to browse</p>
+                </div>
+                <input type="file" id="fileInput" accept="image/*" hidden>
+            </div>
+
+            <div class="processing-area" id="processingArea" style="display: none;">
+                <div class="spinner"></div>
+                <p>Processing image...</p>
+            </div>
+
+            <div class="preview-area" id="previewArea" style="display: none;">
+                <div class="preview-container">
+                    <h2>Preview</h2>
+                    <div class="preview-wrapper">
+                        <canvas id="previewCanvas"></canvas>
+                    </div>
+                    <div class="controls">
+                        <button id="downloadBtn" class="btn btn-primary">Download Token</button>
+                        <button id="resetBtn" class="btn btn-secondary">Process Another</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="error-message" id="errorMessage" style="display: none;"></div>
+        </main>
+
+        <footer>
+            <p>For use with FoundryVTT and other tabletop RPG applications</p>
+        </footer>
+    </div>
+
+    <!-- face-api.js library for face detection -->
+    <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.min.js"></script>
+    <script type="module" src="app.js"></script>
+</body>
+</html>

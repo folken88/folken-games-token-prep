@@ -1,0 +1,22 @@
+{
+  "name": "folken-games-token-prep",
+  "version": "1.0.0",
+  "description": "Automated RPG token generator that detects faces and creates styled tokens",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx http-server . -p 8080 -c-1",
+    "dev": "npx http-server . -p 8080 -c-1 -o"
+  },
+  "keywords": [
+    "rpg",
+    "token",
+    "foundryvtt",
+    "face-detection",
+    "image-processing"
+  ],
+  "author": "Folken Games",
+  "license": "MIT",
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}
