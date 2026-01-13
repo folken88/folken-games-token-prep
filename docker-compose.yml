@@ -1,0 +1,10 @@
+services:
+  token-prep:
+    build: .
+    container_name: folken-games-token-prep
+    ports:
+      - "5001:80"
+    restart: unless-stopped
+    # Optional: uncomment for live development (mounts local files)
+    # volumes:
+    #   - .:/usr/share/nginx/html:ro

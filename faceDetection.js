@@ -86,17 +86,58 @@ export async function detectFace(image) {
         });
         
         const box = largestFace.detection.box;
+        const landmarks = largestFace.landmarks;
         
         // Scale back to original image dimensions
         const scaleX = image.width / width;
         const scaleY = image.height / height;
+        
+        // Extract key facial landmarks (68-point model)
+        // Scale landmarks to original image size
+        const scaledLandmarks = landmarks.positions.map(point => ({
+            x: point.x * scaleX,
+            y: point.y * scaleY
+        }));
+        
+        // Calculate eye positions (average of eye landmarks)
+        // Left eye: points 36-41, Right eye: points 42-47
+        const leftEyePoints = scaledLandmarks.slice(36, 42);
+        const rightEyePoints = scaledLandmarks.slice(42, 48);
+        
+        const leftEyeCenter = {
+            x: leftEyePoints.reduce((sum, p) => sum + p.x, 0) / leftEyePoints.length,
+            y: leftEyePoints.reduce((sum, p) => sum + p.y, 0) / leftEyePoints.length
+        };
+        
+        const rightEyeCenter = {
+            x: rightEyePoints.reduce((sum, p) => sum + p.x, 0) / rightEyePoints.length,
+            y: rightEyePoints.reduce((sum, p) => sum + p.y, 0) / rightEyePoints.length
+        };
+        
+        // Calculate interpupillary distance (eye distance)
+        const eyeDistance = Math.sqrt(
+            Math.pow(rightEyeCenter.x - leftEyeCenter.x, 2) +
+            Math.pow(rightEyeCenter.y - leftEyeCenter.y, 2)
+        );
+        
+        // Nose tip position (point 30)
+        const noseTip = scaledLandmarks[30];
+        
+        // Nose base position (point 33)
+        const noseBase = scaledLandmarks[33];
         
         return {
             x: box.x * scaleX,
             y: box.y * scaleY,
             width: box.width * scaleX,
             height: box.height * scaleY,
-            landmarks: largestFace.landmarks
+            landmarks: largestFace.landmarks,
+            // Enhanced face data for smart cropping
+            leftEye: leftEyeCenter,
+            rightEye: rightEyeCenter,
+            eyeDistance: eyeDistance,
+            noseTip: noseTip,
+            noseBase: noseBase
         };
     } catch (error) {
         console.error('Face detection error:', error);

@@ -37,6 +37,19 @@
                     <h2>Preview</h2>
                     <div class="preview-wrapper">
                         <canvas id="previewCanvas"></canvas>
+                        <p class="drag-hint">Click and drag to reposition</p>
+                    </div>
+                    <div class="adjustment-controls">
+                        <label for="zoomSlider" class="slider-label">
+                            <span>Zoom Adjustment</span>
+                            <span id="zoomValue">100%</span>
+                        </label>
+                        <div class="slider-container">
+                            <span class="slider-label-min">Zoom Out</span>
+                            <input type="range" id="zoomSlider" min="50" max="150" value="100" step="1" class="slider">
+                            <span class="slider-label-max">Zoom In</span>
+                        </div>
+                        <p class="slider-hint">Adjust if the auto-crop is too tight or too loose</p>
                     </div>
                     <div class="controls">
                         <button id="downloadBtn" class="btn btn-primary">Download Token</button>
