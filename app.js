@@ -6,6 +6,7 @@
 import { detectFace, loadFaceApiModels } from './faceDetection.js';
 import { extractColorScheme, generateBorder } from './colorUtils.js';
 import { createToken } from './tokenGenerator.js';
+import { COLOR_SWATCHES, BORDER_TEXTURES } from './borderStyles.js';
 
 // DOM Elements
 const uploadArea = document.getElementById('uploadArea');
@@ -18,6 +19,10 @@ const resetBtn = document.getElementById('resetBtn');
 const errorMessage = document.getElementById('errorMessage');
 const zoomSlider = document.getElementById('zoomSlider');
 const zoomValue = document.getElementById('zoomValue');
+const colorSwatches = document.getElementById('colorSwatches');
+const textureSwatches = document.getElementById('textureSwatches');
+const resetColorBtn = document.getElementById('resetColorBtn');
+const resetTextureBtn = document.getElementById('resetTextureBtn');
 
 let currentImage = null;
 let currentTokenData = null;
@@ -29,6 +34,7 @@ let isDragging = false;
 let dragStart = {x: 0, y: 0};
 let dragStartOffset = {x: 0, y: 0};
 let lastCropData = null; // Store last crop dimensions for drag scaling
+let currentBorderOptions = { texture: BORDER_TEXTURES.GRADIENT, customColor: null }; // Border customization state
 
 // Initialize the application
 async function init() {
@@ -41,6 +47,9 @@ async function init() {
     try {
         // Load face detection models
         await loadFaceApiModels();
+        
+        // Initialize border customization UI
+        initializeBorderCustomization();
         
         // Set up event listeners
         setupEventListeners();
@@ -116,6 +125,14 @@ function setupEventListeners() {
     // Reset button
     resetBtn.addEventListener('click', resetApp);
     
+    // Reset border customization buttons
+    if (resetColorBtn) {
+        resetColorBtn.addEventListener('click', resetBorderColor);
+    }
+    if (resetTextureBtn) {
+        resetTextureBtn.addEventListener('click', resetBorderTexture);
+    }
+    
     // Zoom slider - use both input and change events for better responsiveness
     if (zoomSlider) {
         zoomSlider.addEventListener('input', handleZoomChange);
@@ -181,8 +198,12 @@ async function processImage(image) {
         zoomSlider.value = 100;
         zoomValue.textContent = '100%';
         
+        // Reset border options to default
+        currentBorderOptions = { texture: BORDER_TEXTURES.GRADIENT, customColor: null };
+        updateBorderCustomizationUI();
+        
         // Generate the token
-        const tokenData = createToken(image, faceData, colorScheme, currentZoomAdjustment, currentCropOffset);
+        const tokenData = createToken(image, faceData, colorScheme, currentZoomAdjustment, currentCropOffset, currentBorderOptions);
         currentTokenData = tokenData;
         
         // Store crop data for drag calculations (set immediately)
@@ -223,8 +244,12 @@ async function processImageFallback(image) {
         zoomSlider.value = 100;
         zoomValue.textContent = '100%';
         
+        // Reset border options to default
+        currentBorderOptions = { texture: BORDER_TEXTURES.GRADIENT, customColor: null };
+        updateBorderCustomizationUI();
+        
         // Generate token
-        const tokenData = createToken(image, faceData, colorScheme, currentZoomAdjustment, currentCropOffset);
+        const tokenData = createToken(image, faceData, colorScheme, currentZoomAdjustment, currentCropOffset, currentBorderOptions);
         currentTokenData = tokenData;
         
         // Store crop data for drag calculations (set immediately)
@@ -273,7 +298,7 @@ function regenerateToken() {
     if (!currentImage || !currentFaceData || !currentColorScheme) return;
     
     try {
-        const tokenData = createToken(currentImage, currentFaceData, currentColorScheme, currentZoomAdjustment, currentCropOffset);
+        const tokenData = createToken(currentImage, currentFaceData, currentColorScheme, currentZoomAdjustment, currentCropOffset, currentBorderOptions);
         currentTokenData = tokenData;
         
         // Store crop data for drag calculations (always update this)
@@ -428,12 +453,120 @@ function resetApp() {
     currentColorScheme = null;
     currentZoomAdjustment = 1.0;
     currentCropOffset = {x: 0, y: 0};
+    currentBorderOptions = { texture: BORDER_TEXTURES.GRADIENT, customColor: null };
     isDragging = false;
     fileInput.value = '';
     zoomSlider.value = 100;
     zoomValue.textContent = '100%';
     hideError();
     showUpload();
+}
+
+// Initialize border customization UI
+function initializeBorderCustomization() {
+    // Initialize color swatches
+    const colorSwatchesEl = document.getElementById('colorSwatches');
+    if (colorSwatchesEl) {
+        // Clear any existing swatches
+        colorSwatchesEl.innerHTML = '';
+        
+        COLOR_SWATCHES.forEach((swatch, index) => {
+            const swatchEl = document.createElement('button');
+            swatchEl.className = 'color-swatch';
+            swatchEl.style.backgroundColor = `rgb(${swatch.r}, ${swatch.g}, ${swatch.b})`;
+            swatchEl.title = swatch.name;
+            swatchEl.setAttribute('data-color-index', index);
+            swatchEl.setAttribute('aria-label', `Select ${swatch.name} color`);
+            swatchEl.addEventListener('click', () => selectBorderColor(swatch));
+            colorSwatchesEl.appendChild(swatchEl);
+        });
+    } else {
+        console.warn('Color swatches container not found');
+    }
+    
+    // Initialize texture swatches
+    const textureSwatchesEl = document.getElementById('textureSwatches');
+    if (textureSwatchesEl) {
+        // Clear any existing swatches
+        textureSwatchesEl.innerHTML = '';
+        
+        const textureNames = {
+            [BORDER_TEXTURES.SOLID]: 'Solid',
+            [BORDER_TEXTURES.GRADIENT]: 'Gradient',
+            [BORDER_TEXTURES.METALLIC]: 'Metallic',
+            [BORDER_TEXTURES.LEATHER]: 'Leather',
+            [BORDER_TEXTURES.WOOD]: 'Wood',
+            [BORDER_TEXTURES.STONE]: 'Stone',
+            [BORDER_TEXTURES.CRYSTAL]: 'Crystal',
+            [BORDER_TEXTURES.GLOW]: 'Glow'
+        };
+        
+        Object.entries(BORDER_TEXTURES).forEach(([key, textureType]) => {
+            const swatchEl = document.createElement('button');
+            swatchEl.className = 'texture-swatch';
+            swatchEl.setAttribute('data-texture', textureType);
+            swatchEl.textContent = textureNames[textureType].substring(0, 3);
+            swatchEl.title = textureNames[textureType];
+            swatchEl.setAttribute('aria-label', `Select ${textureNames[textureType]} texture`);
+            swatchEl.addEventListener('click', () => selectBorderTexture(textureType));
+            textureSwatchesEl.appendChild(swatchEl);
+        });
+    } else {
+        console.warn('Texture swatches container not found');
+    }
+    
+    updateBorderCustomizationUI();
+}
+
+// Update border customization UI to reflect current state
+function updateBorderCustomizationUI() {
+    // Update texture swatches
+    if (textureSwatches) {
+        const textureSwatchElements = textureSwatches.querySelectorAll('.texture-swatch');
+        textureSwatchElements.forEach(el => {
+            if (el.getAttribute('data-texture') === currentBorderOptions.texture) {
+                el.classList.add('active');
+            } else {
+                el.classList.remove('active');
+            }
+        });
+    }
+    
+    // Update color swatches (only show active if custom color is selected)
+    if (colorSwatches) {
+        const colorSwatchElements = colorSwatches.querySelectorAll('.color-swatch');
+        colorSwatchElements.forEach(el => {
+            el.classList.remove('active');
+        });
+    }
+}
+
+// Handle border color selection
+function selectBorderColor(color) {
+    currentBorderOptions.customColor = color;
+    updateBorderCustomizationUI();
+    regenerateToken();
+}
+
+// Handle border texture selection
+function selectBorderTexture(textureType) {
+    currentBorderOptions.texture = textureType;
+    updateBorderCustomizationUI();
+    regenerateToken();
+}
+
+// Reset border color to auto-detected
+function resetBorderColor() {
+    currentBorderOptions.customColor = null;
+    updateBorderCustomizationUI();
+    regenerateToken();
+}
+
+// Reset border texture to default (gradient)
+function resetBorderTexture() {
+    currentBorderOptions.texture = BORDER_TEXTURES.GRADIENT;
+    updateBorderCustomizationUI();
+    regenerateToken();
 }
 
 // Store adjustment data for future analysis

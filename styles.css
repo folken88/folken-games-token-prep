@@ -162,6 +162,116 @@ header h1 {
     position: relative;
 }
 
+.border-customization {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+
+.preview-canvas-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.swatch-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    min-width: 120px;
+}
+
+.swatch-label {
+    font-size: 0.85rem;
+    color: rgba(234, 234, 234, 0.7);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.swatch-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    max-width: 200px;
+}
+
+.color-swatch,
+.texture-swatch {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.color-swatch {
+    /* Background color is set inline via JavaScript */
+}
+
+.color-swatch:hover {
+    transform: scale(1.1);
+    border-color: var(--accent-color);
+    box-shadow: 0 0 8px rgba(83, 52, 131, 0.5);
+}
+
+.color-swatch.active {
+    border-color: var(--accent-color);
+    border-width: 3px;
+    box-shadow: 0 0 12px rgba(83, 52, 131, 0.7);
+}
+
+.texture-swatch {
+    background: var(--texture-pattern, #ccc);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    text-transform: uppercase;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.texture-swatch:hover {
+    transform: scale(1.1);
+    border-color: var(--accent-color);
+    box-shadow: 0 0 8px rgba(83, 52, 131, 0.5);
+}
+
+.texture-swatch.active {
+    border-color: var(--accent-color);
+    border-width: 3px;
+    box-shadow: 0 0 12px rgba(83, 52, 131, 0.7);
+}
+
+.reset-swatch-btn {
+    padding: 4px 12px;
+    font-size: 0.75rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    color: rgba(234, 234, 234, 0.8);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.reset-swatch-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: var(--accent-color);
+}
+
 .drag-hint {
     margin-top: 10px;
     font-size: 0.85rem;
@@ -341,6 +451,42 @@ footer {
     font-size: 0.9rem;
 }
 
+/* Texture Patterns */
+.texture-swatch[data-texture="solid"] {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.texture-swatch[data-texture="gradient"] {
+    background: radial-gradient(circle, #667eea 0%, #764ba2 100%);
+}
+
+.texture-swatch[data-texture="metallic"] {
+    background: linear-gradient(135deg, #c0c0c0 0%, #808080 50%, #c0c0c0 100%);
+}
+
+.texture-swatch[data-texture="leather"] {
+    background: linear-gradient(135deg, #8b4513 0%, #654321 100%);
+    background-image: repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(0,0,0,0.1) 2px, rgba(0,0,0,0.1) 4px);
+}
+
+.texture-swatch[data-texture="wood"] {
+    background: linear-gradient(90deg, #deb887 0%, #8b6914 50%, #deb887 100%);
+}
+
+.texture-swatch[data-texture="stone"] {
+    background: linear-gradient(135deg, #696969 0%, #2f2f2f 100%);
+    background-image: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(255,255,255,0.1) 3px, rgba(255,255,255,0.1) 6px);
+}
+
+.texture-swatch[data-texture="crystal"] {
+    background: linear-gradient(135deg, rgba(173, 216, 230, 0.8) 0%, rgba(135, 206, 250, 0.8) 100%);
+}
+
+.texture-swatch[data-texture="glow"] {
+    background: radial-gradient(circle, #ffff00 0%, #ff6600 100%);
+    box-shadow: 0 0 10px rgba(255, 255, 0, 0.5);
+}
+
 /* Responsive Design */
 @media (max-width: 600px) {
     .container {
@@ -357,5 +503,20 @@ footer {
 
     .btn {
         width: 100%;
+    }
+
+    .border-customization {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .swatch-group {
+        min-width: auto;
+        width: 100%;
+    }
+
+    .swatch-container {
+        max-width: 100%;
+        justify-content: center;
     }
 }

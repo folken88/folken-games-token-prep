@@ -4,6 +4,7 @@
  */
 
 import { generateBorder, colorToCSS } from './colorUtils.js';
+import { getTextureDefinition, BORDER_TEXTURES } from './borderStyles.js';
 
 /**
  * Create a token from an image with face detection and color-based border
@@ -12,9 +13,10 @@ import { generateBorder, colorToCSS } from './colorUtils.js';
  * @param {Object} colorScheme - Color scheme object
  * @param {number} zoomAdjustment - Zoom adjustment factor (1.0 = default, >1.0 = zoom in, <1.0 = zoom out)
  * @param {Object} cropOffset - Manual crop offset {x: number, y: number} for dragging
+ * @param {Object} borderOptions - Border customization options {texture: string, customColor: {r, g, b}}
  * @returns {Object} Token data with canvas
  */
-export function createToken(image, faceData, colorScheme, zoomAdjustment = 1.0, cropOffset = {x: 0, y: 0}) {
+export function createToken(image, faceData, colorScheme, zoomAdjustment = 1.0, cropOffset = {x: 0, y: 0}, borderOptions = null) {
     const tokenSize = 512; // Standard token size
     const borderWidth = 8;
     const canvas = document.createElement('canvas');
@@ -26,8 +28,19 @@ export function createToken(image, faceData, colorScheme, zoomAdjustment = 1.0, 
     // Calculate crop area centered on face with zoom adjustment and offset
     const cropData = calculateCropArea(image, faceData, tokenSize - (borderWidth * 2), zoomAdjustment, cropOffset);
     
-    // Draw border background (circular)
-    drawCircularBorder(ctx, tokenSize, borderWidth, colorScheme);
+    // Prepare border colors (use custom color if provided, otherwise use colorScheme)
+    const borderColors = borderOptions?.customColor 
+        ? {
+            primary: borderOptions.customColor,
+            secondary: borderOptions.customColor,
+            accent: borderOptions.customColor,
+            border: borderOptions.customColor
+        }
+        : colorScheme;
+    
+    // Draw border background (circular) with texture
+    const textureType = borderOptions?.texture || BORDER_TEXTURES.GRADIENT;
+    drawCircularBorder(ctx, tokenSize, borderWidth, borderColors, textureType);
     
     // Create clipping path for circular token
     ctx.save();
@@ -162,43 +175,20 @@ function calculateCropArea(image, faceData, targetSize, zoomAdjustment = 1.0, cr
 }
 
 /**
- * Draw circular border with gradient
+ * Draw circular border with texture
  * @param {CanvasRenderingContext2D} ctx - Canvas context
  * @param {number} size - Canvas size
  * @param {number} borderWidth - Border width
- * @param {Object} colorScheme - Color scheme
+ * @param {Object} colors - Color scheme or custom colors
+ * @param {string} textureType - Texture type from BORDER_TEXTURES
  */
-function drawCircularBorder(ctx, size, borderWidth, colorScheme) {
-    const centerX = size / 2;
-    const centerY = size / 2;
-    const radius = size / 2;
-    
-    // Draw outer circle (background)
-    ctx.fillStyle = colorToCSS(colorScheme.border);
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Draw gradient border
-    const gradient = ctx.createRadialGradient(
-        centerX, centerY, radius - borderWidth,
-        centerX, centerY, radius
-    );
-    
-    gradient.addColorStop(0, colorToCSS(colorScheme.primary));
-    gradient.addColorStop(0.5, colorToCSS(colorScheme.secondary));
-    gradient.addColorStop(1, colorToCSS(colorScheme.accent));
-    
-    ctx.fillStyle = gradient;
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Draw inner circle to create border effect
-    ctx.fillStyle = 'transparent';
-    ctx.globalCompositeOperation = 'destination-out';
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, radius - borderWidth, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.globalCompositeOperation = 'source-over';
+function drawCircularBorder(ctx, size, borderWidth, colors, textureType = BORDER_TEXTURES.GRADIENT) {
+    const textureDef = getTextureDefinition(textureType);
+    if (textureDef && textureDef.draw) {
+        textureDef.draw(ctx, size, borderWidth, colors);
+    } else {
+        // Fallback to gradient
+        const fallbackDef = getTextureDefinition(BORDER_TEXTURES.GRADIENT);
+        fallbackDef.draw(ctx, size, borderWidth, colors);
+    }
 }

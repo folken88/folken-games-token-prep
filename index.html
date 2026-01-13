@@ -36,7 +36,21 @@
                 <div class="preview-container">
                     <h2>Preview</h2>
                     <div class="preview-wrapper">
-                        <canvas id="previewCanvas"></canvas>
+                        <div class="border-customization">
+                            <div class="swatch-group color-swatches">
+                                <label class="swatch-label">Border Color</label>
+                                <div class="swatch-container" id="colorSwatches"></div>
+                                <button class="reset-swatch-btn" id="resetColorBtn" title="Reset to auto-detected colors">Auto</button>
+                            </div>
+                            <div class="preview-canvas-wrapper">
+                                <canvas id="previewCanvas"></canvas>
+                            </div>
+                            <div class="swatch-group texture-swatches">
+                                <label class="swatch-label">Border Texture</label>
+                                <div class="swatch-container" id="textureSwatches"></div>
+                                <button class="reset-swatch-btn" id="resetTextureBtn" title="Reset to gradient texture">Default</button>
+                            </div>
+                        </div>
                         <p class="drag-hint">Click and drag to reposition</p>
                     </div>
                     <div class="adjustment-controls">
