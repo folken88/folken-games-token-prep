@@ -1,10 +1,20 @@
 services:
+  # Node.js backend for global "tokens created" counter (persisted via tokens.json)
+  backend:
+    build: ./backend
+    container_name: tkn8r-backend
+    volumes:
+      - ./tokens.json:/app/tokens.json
+    environment:
+      - PORT=3000
+    restart: unless-stopped
+
+  # Nginx frontend (static UI + /api proxy to backend)
   token-prep:
     build: .
     container_name: folken-games-token-prep
     ports:
       - "5001:80"
+    depends_on:
+      - backend
     restart: unless-stopped
-    # Optional: uncomment for live development (mounts local files)
-    # volumes:
-    #   - .:/usr/share/nginx/html:ro

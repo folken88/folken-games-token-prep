@@ -7,7 +7,7 @@
 - **Drag-to-replace**: You can now drag a new image directly onto the preview area to replace the current token without clicking "Process Another"
 - **Border thickness toggle**: Added ability to switch between thin (8px) and thick (16px) borders via a toggle button in the texture swatches area
 - **Compact UI indicator**: Added subtle hint text below the canvas showing "Drag to reposition • Scroll to zoom"
-- **Tokens created counter**: Adds a persistent counter that increments only when you download a token
+- **Tokens created counter**: Adds a global persistent counter (shared across users) that increments only when you download a token
 
 ### Changed
 - **Layout optimization**: Color swatches are now vertical on the left, texture swatches (including thickness toggle) are vertical on the right, saving vertical space
@@ -20,3 +20,4 @@
 - Added border thickness state management to `currentBorderOptions`
 - Improved drag-and-drop handling to support dropping new images on preview area
 - Enhanced filename sanitization for safe download filenames
+- Added backend API (`/api/tokens/*`) with persisted storage in `tokens.json` (Docker volume)

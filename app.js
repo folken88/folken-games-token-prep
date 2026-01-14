@@ -25,8 +25,7 @@ const textureSwatches = document.getElementById('textureSwatches');
 const resetColorBtn = document.getElementById('resetColorBtn');
 const resetTextureBtn = document.getElementById('resetTextureBtn');
 const tokenCountEl = document.getElementById('tokenCount');
-
-const TOKEN_COUNT_STORAGE_KEY = 'tkn8r.tokensCreated';
+const TOKEN_API_BASE = '/api/tokens';
 
 let currentImage = null;
 let currentTokenData = null;
@@ -42,42 +41,50 @@ let currentBorderOptions = { texture: BORDER_TEXTURES.GRADIENT, customColor: nul
 let currentFileName = null; // Store original filename for download naming
 
 /**
- * Read the persisted token count from localStorage.
- * @returns {number} Non-negative integer count
- */
-function getTokensCreatedCount() {
-    try {
-        const raw = localStorage.getItem(TOKEN_COUNT_STORAGE_KEY);
-        const parsed = parseInt(raw || '0', 10);
-        if (!Number.isFinite(parsed) || parsed < 0) return 0;
-        return parsed;
-    } catch (_err) {
-        return 0;
-    }
-}
-
-/**
- * Persist and display the token count.
+ * Update the on-screen counter.
  * @param {number} count
  */
 function setTokensCreatedCount(count) {
+    if (!tokenCountEl) return;
     const safe = Math.max(0, Math.floor(Number(count) || 0));
+    tokenCountEl.textContent = String(safe);
+}
+
+/**
+ * Fetch global token count from backend (shared across users).
+ * @returns {Promise<number|null>}
+ */
+async function fetchTokensCreatedCount() {
     try {
-        localStorage.setItem(TOKEN_COUNT_STORAGE_KEY, String(safe));
+        const res = await fetch(`${TOKEN_API_BASE}/count`, { cache: 'no-store' });
+        if (!res.ok) return null;
+        const data = await res.json();
+        const count = Number(data?.count);
+        if (!Number.isFinite(count) || count < 0) return null;
+        return Math.floor(count);
     } catch (_err) {
-        // Ignore storage failures (private mode, quota, etc.)
-    }
-    if (tokenCountEl) {
-        tokenCountEl.textContent = String(safe);
+        return null;
     }
 }
 
 /**
- * Increment the token count (only called after a download is triggered).
+ * Increment global token count on backend (called after download is triggered).
+ * @returns {Promise<number|null>}
  */
-function incrementTokensCreatedCount() {
-    const current = getTokensCreatedCount();
-    setTokensCreatedCount(current + 1);
+async function incrementTokensCreatedCount() {
+    try {
+        const res = await fetch(`${TOKEN_API_BASE}/increment`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        if (!res.ok) return null;
+        const data = await res.json();
+        const count = Number(data?.count);
+        if (!Number.isFinite(count) || count < 0) return null;
+        return Math.floor(count);
+    } catch (_err) {
+        return null;
+    }
 }
 
 // Initialize the application
@@ -101,8 +108,9 @@ async function init() {
         // Set up drag functionality
         setupDragFunctionality();
 
-        // Initialize “tokens created” display
-        setTokensCreatedCount(getTokensCreatedCount());
+        // Initialize “tokens created” display (global)
+        const count = await fetchTokensCreatedCount();
+        if (count !== null) setTokensCreatedCount(count);
     } catch (error) {
         showError('Failed to initialize application: ' + error.message);
         console.error('Initialization error:', error);
@@ -559,7 +567,9 @@ function downloadToken() {
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            incrementTokensCreatedCount();
+            incrementTokensCreatedCount().then((count) => {
+                if (count !== null) setTokensCreatedCount(count);
+            });
             return;
         }
         
@@ -570,7 +580,9 @@ function downloadToken() {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        incrementTokensCreatedCount();
+        incrementTokensCreatedCount().then((count) => {
+            if (count !== null) setTokensCreatedCount(count);
+        });
         
         // Clean up the blob URL after a short delay
         setTimeout(() => URL.revokeObjectURL(url), 100);

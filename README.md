@@ -12,7 +12,7 @@ An automated web application that transforms images into RPG tokens for FoundryV
 - **Smart Color Extraction**: Automatically extracts color schemes from the image to create matching borders
 - **Customizable Borders**: Choose from 8 border textures (Solid, Gradient, Metallic, Leather, Wood, Stone, Crystal, Glow) and 12 color swatches (Gold, Silver, Copper, Red, Blue, Green, Purple, Orange, White, Black, Bronze, Platinum)
 - **Border Thickness Control**: Toggle between thin (8px) and thick (16px) borders
-- **Tokens Created Counter**: Tracks how many tokens you’ve created (increments only when you download)
+- **Tokens Created Counter**: Global counter shared by all users (increments only when you download)
 - **Beautiful Default Borders**: Generates gradient borders that complement the image's color palette by default
 - **Drag & Drop Interface**: Simple, intuitive interface - just drag and drop your image
 - **High-Quality Output**: Generates 512x512 PNG tokens optimized for tabletop RPG applications
@@ -31,18 +31,9 @@ An automated web application that transforms images into RPG tokens for FoundryV
    ```
    Then open `http://localhost:5001` in your browser.
 
-2. **Or Build and Run with Docker directly**:
-   ```bash
-   docker build -t folken-games-token-prep .
-   docker run -d -p 5001:80 --name token-prep folken-games-token-prep
-   ```
-   Then open `http://localhost:5001` in your browser.
-
-3. **To Stop the Container**:
+2. **To Stop the Containers**:
    ```bash
    docker-compose down
-   # or
-   docker stop token-prep && docker rm token-prep
    ```
 
 ### Option 2: npm/Node.js

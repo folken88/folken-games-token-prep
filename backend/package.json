@@ -1,0 +1,13 @@
+{
+  "name": "tkn8r-backend",
+  "version": "1.0.0",
+  "description": "Backend API for TKN8R global token counter",
+  "main": "server.js",
+  "private": true,
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2"
+  }
+}
+
