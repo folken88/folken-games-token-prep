@@ -11,6 +11,7 @@ An automated web application that transforms images into RPG tokens for FoundryV
 - **Zoom Slider**: Precise zoom adjustment from 50% to 150%
 - **Smart Color Extraction**: Automatically extracts color schemes from the image to create matching borders
 - **Customizable Borders**: Choose from 8 border textures (Solid, Gradient, Metallic, Leather, Wood, Stone, Crystal, Glow) and 12 color swatches (Gold, Silver, Copper, Red, Blue, Green, Purple, Orange, White, Black, Bronze, Platinum)
+- **Border Thickness Control**: Toggle between thin (8px) and thick (16px) borders
 - **Beautiful Default Borders**: Generates gradient borders that complement the image's color palette by default
 - **Drag & Drop Interface**: Simple, intuitive interface - just drag and drop your image
 - **High-Quality Output**: Generates 512x512 PNG tokens optimized for tabletop RPG applications
@@ -57,6 +58,7 @@ An automated web application that transforms images into RPG tokens for FoundryV
 2. **Upload an Image**: 
    - Drag and drop an image onto the upload area, or
    - Click the upload area to browse for a file
+   - **Tip**: You can drag a new image onto the preview area to replace the current token without clicking "Process Another"
 
 3. **Automatic Processing**: The app will automatically:
    - Detect the face using eye distance and nose position
@@ -71,6 +73,7 @@ An automated web application that transforms images into RPG tokens for FoundryV
    - **Customize Border**: 
      - Click any color swatch on the left to change the border color
      - Click any texture swatch on the right to change the border texture/style
+     - Click the "Thin/Thick" button in the texture swatches to toggle border thickness
      - Use the "Auto" button to reset to auto-detected colors
      - Use the "Default" button to reset to gradient texture
 

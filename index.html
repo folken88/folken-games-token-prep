@@ -34,7 +34,6 @@
 
             <div class="preview-area" id="previewArea" style="display: none;">
                 <div class="preview-container">
-                    <h2>Preview</h2>
                     <div class="preview-wrapper">
                         <div class="border-customization">
                             <div class="swatch-group color-swatches">
@@ -44,6 +43,7 @@
                             </div>
                             <div class="preview-canvas-wrapper">
                                 <canvas id="previewCanvas"></canvas>
+                                <div class="canvas-hint">Drag to reposition • Scroll to zoom</div>
                             </div>
                             <div class="swatch-group texture-swatches">
                                 <label class="swatch-label">Border Texture</label>
@@ -51,7 +51,6 @@
                                 <button class="reset-swatch-btn" id="resetTextureBtn" title="Reset to gradient texture">Default</button>
                             </div>
                         </div>
-                        <p class="drag-hint">Click and drag to reposition</p>
                     </div>
                     <div class="adjustment-controls">
                         <label for="zoomSlider" class="slider-label">
@@ -82,6 +81,6 @@
 
     <!-- face-api.js library for face detection -->
     <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.min.js"></script>
-    <script type="module" src="app.js"></script>
+    <script type="module" src="app.js?v=1.2"></script>
 </body>
 </html>

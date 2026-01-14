@@ -1,7 +1,13 @@
 /**
  * Folken Games Token Prep - Main Application Logic
  * Handles image processing, face detection, color extraction, and token generation
+ * Version: 1.1 - Added filename-based download naming
  */
+
+console.log('Token Prep app.js loaded - version 1.2 with filename support');
+// Make it very obvious this is the new version
+window.tokenPrepVersion = '1.2';
+console.error('TOKEN PREP VERSION 1.2 LOADED - IF YOU SEE THIS, NEW CODE IS LOADING');
 
 import { detectFace, loadFaceApiModels } from './faceDetection.js';
 import { extractColorScheme, generateBorder } from './colorUtils.js';
@@ -34,7 +40,8 @@ let isDragging = false;
 let dragStart = {x: 0, y: 0};
 let dragStartOffset = {x: 0, y: 0};
 let lastCropData = null; // Store last crop dimensions for drag scaling
-let currentBorderOptions = { texture: BORDER_TEXTURES.GRADIENT, customColor: null }; // Border customization state
+let currentBorderOptions = { texture: BORDER_TEXTURES.GRADIENT, customColor: null, borderWidth: 8 }; // Border customization state (8 = thin, 16 = thick)
+let currentFileName = null; // Store original filename for download naming
 
 // Initialize the application
 async function init() {
@@ -108,6 +115,38 @@ function setupEventListeners() {
         }
     });
     
+    // Allow drag and drop on preview area to replace current image
+    if (previewArea) {
+        previewArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            previewArea.classList.add('dragover');
+        });
+        
+        previewArea.addEventListener('dragenter', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            previewArea.classList.add('dragover');
+        });
+        
+        previewArea.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            previewArea.classList.remove('dragover');
+        });
+        
+        previewArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            previewArea.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files && files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+    }
+    
     // Prevent default drag behavior on the entire document
     document.addEventListener('dragover', (e) => {
         e.preventDefault();
@@ -133,6 +172,8 @@ function setupEventListeners() {
         resetTextureBtn.addEventListener('click', resetBorderTexture);
     }
     
+    // Border thickness toggle (handled in initializeBorderCustomization)
+    
     // Zoom slider - use both input and change events for better responsiveness
     if (zoomSlider) {
         zoomSlider.addEventListener('input', handleZoomChange);
@@ -153,6 +194,26 @@ async function handleFile(file) {
     showProcessing();
     
     try {
+        // Store original filename (without extension)
+        console.log('handleFile called with file:', file);
+        console.log('file.name:', file.name);
+        
+        // Remove extension and sanitize for use in download filename
+        let fileNameWithoutExt = file.name || 'image';
+        const lastDotIndex = fileNameWithoutExt.lastIndexOf('.');
+        if (lastDotIndex > 0) {
+            fileNameWithoutExt = fileNameWithoutExt.substring(0, lastDotIndex);
+        }
+        // Sanitize filename: remove/replace characters that might cause issues in filenames
+        // Only keep alphanumeric, underscores, and hyphens
+        currentFileName = fileNameWithoutExt.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 50);
+        // If filename is empty after sanitization, use a default
+        if (!currentFileName || currentFileName.trim() === '') {
+            currentFileName = 'image';
+        }
+        console.log('Stored filename:', currentFileName, 'from original:', file.name);
+        console.log('currentFileName is now:', currentFileName);
+        
         // Load image
         const image = await loadImage(file);
         currentImage = image;
@@ -199,7 +260,7 @@ async function processImage(image) {
         zoomValue.textContent = '100%';
         
         // Reset border options to default
-        currentBorderOptions = { texture: BORDER_TEXTURES.GRADIENT, customColor: null };
+        currentBorderOptions = { texture: BORDER_TEXTURES.GRADIENT, customColor: null, borderWidth: 8 };
         updateBorderCustomizationUI();
         
         // Generate the token
@@ -245,7 +306,7 @@ async function processImageFallback(image) {
         zoomValue.textContent = '100%';
         
         // Reset border options to default
-        currentBorderOptions = { texture: BORDER_TEXTURES.GRADIENT, customColor: null };
+        currentBorderOptions = { texture: BORDER_TEXTURES.GRADIENT, customColor: null, borderWidth: 8 };
         updateBorderCustomizationUI();
         
         // Generate token
@@ -437,12 +498,59 @@ function setupDragFunctionality() {
 
 // Download the token as PNG
 function downloadToken() {
-    if (!currentTokenData) return;
+    if (!currentTokenData) {
+        console.warn('Cannot download: no token data');
+        return;
+    }
     
-    const link = document.createElement('a');
-    link.download = 'token.png';
-    link.href = currentTokenData.canvas.toDataURL('image/png');
-    link.click();
+    // Determine filename - always use token_ prefix
+    let fileName = 'token.png';
+    
+    // Debug: Check what currentFileName actually is
+    console.log('DEBUG downloadToken - currentFileName:', currentFileName);
+    console.log('DEBUG downloadToken - typeof currentFileName:', typeof currentFileName);
+    console.log('DEBUG downloadToken - currentFileName value:', String(currentFileName));
+    
+    if (currentFileName) {
+        const cleanName = String(currentFileName).trim();
+        console.log('DEBUG downloadToken - cleanName:', cleanName);
+        if (cleanName !== '' && cleanName !== 'null' && cleanName !== 'undefined') {
+            fileName = `token_${cleanName}.png`;
+            console.log('DEBUG downloadToken - using custom filename:', fileName);
+        } else {
+            console.log('DEBUG downloadToken - cleanName was empty/null, using default');
+        }
+    } else {
+        console.log('DEBUG downloadToken - currentFileName is falsy, using default');
+    }
+    
+    console.log('DEBUG downloadToken - final fileName:', fileName);
+    
+    // Create blob URL for better browser compatibility
+    const canvas = currentTokenData.canvas;
+    canvas.toBlob(function(blob) {
+        if (!blob) {
+            // Fallback to data URL if blob creation fails
+            const link = document.createElement('a');
+            link.download = fileName;
+            link.href = canvas.toDataURL('image/png');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            return;
+        }
+        
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.download = fileName;
+        link.href = url;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // Clean up the blob URL after a short delay
+        setTimeout(() => URL.revokeObjectURL(url), 100);
+    }, 'image/png');
 }
 
 // Reset the application
@@ -453,7 +561,8 @@ function resetApp() {
     currentColorScheme = null;
     currentZoomAdjustment = 1.0;
     currentCropOffset = {x: 0, y: 0};
-    currentBorderOptions = { texture: BORDER_TEXTURES.GRADIENT, customColor: null };
+    currentBorderOptions = { texture: BORDER_TEXTURES.GRADIENT, customColor: null, borderWidth: 8 };
+    currentFileName = null;
     isDragging = false;
     fileInput.value = '';
     zoomSlider.value = 100;
@@ -511,6 +620,20 @@ function initializeBorderCustomization() {
             swatchEl.addEventListener('click', () => selectBorderTexture(textureType));
             textureSwatchesEl.appendChild(swatchEl);
         });
+        
+        // Add border thickness toggle button to texture swatches container
+        const thicknessBtn = document.createElement('button');
+        thicknessBtn.className = 'texture-swatch';
+        thicknessBtn.id = 'borderThicknessBtn';
+        thicknessBtn.setAttribute('data-thickness', 'thin');
+        thicknessBtn.title = 'Toggle border thickness';
+        thicknessBtn.setAttribute('aria-label', 'Toggle border thickness');
+        const thicknessLabel = document.createElement('span');
+        thicknessLabel.id = 'borderThicknessLabel';
+        thicknessLabel.textContent = 'Thin';
+        thicknessBtn.appendChild(thicknessLabel);
+        thicknessBtn.addEventListener('click', toggleBorderThickness);
+        textureSwatchesEl.appendChild(thicknessBtn);
     } else {
         console.warn('Texture swatches container not found');
     }
@@ -520,9 +643,9 @@ function initializeBorderCustomization() {
 
 // Update border customization UI to reflect current state
 function updateBorderCustomizationUI() {
-    // Update texture swatches
+    // Update texture swatches (excluding thickness button)
     if (textureSwatches) {
-        const textureSwatchElements = textureSwatches.querySelectorAll('.texture-swatch');
+        const textureSwatchElements = textureSwatches.querySelectorAll('.texture-swatch[data-texture]');
         textureSwatchElements.forEach(el => {
             if (el.getAttribute('data-texture') === currentBorderOptions.texture) {
                 el.classList.add('active');
@@ -538,6 +661,21 @@ function updateBorderCustomizationUI() {
         colorSwatchElements.forEach(el => {
             el.classList.remove('active');
         });
+    }
+    
+    // Update border thickness button
+    const thicknessBtn = document.getElementById('borderThicknessBtn');
+    const thicknessLabel = document.getElementById('borderThicknessLabel');
+    if (thicknessBtn && thicknessLabel) {
+        if (currentBorderOptions.borderWidth === 8) {
+            thicknessBtn.setAttribute('data-thickness', 'thin');
+            thicknessBtn.classList.remove('active');
+            thicknessLabel.textContent = 'Thin';
+        } else {
+            thicknessBtn.setAttribute('data-thickness', 'thick');
+            thicknessBtn.classList.add('active');
+            thicknessLabel.textContent = 'Thick';
+        }
     }
 }
 
@@ -566,6 +704,30 @@ function resetBorderColor() {
 function resetBorderTexture() {
     currentBorderOptions.texture = BORDER_TEXTURES.GRADIENT;
     updateBorderCustomizationUI();
+    regenerateToken();
+}
+
+// Toggle border thickness between thin (8) and thick (16)
+function toggleBorderThickness() {
+    if (currentBorderOptions.borderWidth === 8) {
+        currentBorderOptions.borderWidth = 16;
+        const btn = document.getElementById('borderThicknessBtn');
+        const label = document.getElementById('borderThicknessLabel');
+        if (btn) {
+            btn.setAttribute('data-thickness', 'thick');
+            btn.classList.add('active');
+        }
+        if (label) label.textContent = 'Thick';
+    } else {
+        currentBorderOptions.borderWidth = 8;
+        const btn = document.getElementById('borderThicknessBtn');
+        const label = document.getElementById('borderThicknessLabel');
+        if (btn) {
+            btn.setAttribute('data-thickness', 'thin');
+            btn.classList.remove('active');
+        }
+        if (label) label.textContent = 'Thin';
+    }
     regenerateToken();
 }
 

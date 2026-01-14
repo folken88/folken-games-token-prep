@@ -18,7 +18,7 @@ import { getTextureDefinition, BORDER_TEXTURES } from './borderStyles.js';
  */
 export function createToken(image, faceData, colorScheme, zoomAdjustment = 1.0, cropOffset = {x: 0, y: 0}, borderOptions = null) {
     const tokenSize = 512; // Standard token size
-    const borderWidth = 8;
+    const borderWidth = borderOptions?.borderWidth || 8; // Default to 8 (thin), can be 16 (thick)
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     
