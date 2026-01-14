@@ -4,11 +4,6 @@
  * Version: 1.1 - Added filename-based download naming
  */
 
-console.log('Token Prep app.js loaded - version 1.2 with filename support');
-// Make it very obvious this is the new version
-window.tokenPrepVersion = '1.2';
-console.error('TOKEN PREP VERSION 1.2 LOADED - IF YOU SEE THIS, NEW CODE IS LOADING');
-
 import { detectFace, loadFaceApiModels } from './faceDetection.js';
 import { extractColorScheme, generateBorder } from './colorUtils.js';
 import { createToken } from './tokenGenerator.js';
@@ -29,6 +24,9 @@ const colorSwatches = document.getElementById('colorSwatches');
 const textureSwatches = document.getElementById('textureSwatches');
 const resetColorBtn = document.getElementById('resetColorBtn');
 const resetTextureBtn = document.getElementById('resetTextureBtn');
+const tokenCountEl = document.getElementById('tokenCount');
+
+const TOKEN_COUNT_STORAGE_KEY = 'tkn8r.tokensCreated';
 
 let currentImage = null;
 let currentTokenData = null;
@@ -42,6 +40,45 @@ let dragStartOffset = {x: 0, y: 0};
 let lastCropData = null; // Store last crop dimensions for drag scaling
 let currentBorderOptions = { texture: BORDER_TEXTURES.GRADIENT, customColor: null, borderWidth: 8 }; // Border customization state (8 = thin, 16 = thick)
 let currentFileName = null; // Store original filename for download naming
+
+/**
+ * Read the persisted token count from localStorage.
+ * @returns {number} Non-negative integer count
+ */
+function getTokensCreatedCount() {
+    try {
+        const raw = localStorage.getItem(TOKEN_COUNT_STORAGE_KEY);
+        const parsed = parseInt(raw || '0', 10);
+        if (!Number.isFinite(parsed) || parsed < 0) return 0;
+        return parsed;
+    } catch (_err) {
+        return 0;
+    }
+}
+
+/**
+ * Persist and display the token count.
+ * @param {number} count
+ */
+function setTokensCreatedCount(count) {
+    const safe = Math.max(0, Math.floor(Number(count) || 0));
+    try {
+        localStorage.setItem(TOKEN_COUNT_STORAGE_KEY, String(safe));
+    } catch (_err) {
+        // Ignore storage failures (private mode, quota, etc.)
+    }
+    if (tokenCountEl) {
+        tokenCountEl.textContent = String(safe);
+    }
+}
+
+/**
+ * Increment the token count (only called after a download is triggered).
+ */
+function incrementTokensCreatedCount() {
+    const current = getTokensCreatedCount();
+    setTokensCreatedCount(current + 1);
+}
 
 // Initialize the application
 async function init() {
@@ -63,6 +100,9 @@ async function init() {
         
         // Set up drag functionality
         setupDragFunctionality();
+
+        // Initialize “tokens created” display
+        setTokensCreatedCount(getTokensCreatedCount());
     } catch (error) {
         showError('Failed to initialize application: ' + error.message);
         console.error('Initialization error:', error);
@@ -195,9 +235,6 @@ async function handleFile(file) {
     
     try {
         // Store original filename (without extension)
-        console.log('handleFile called with file:', file);
-        console.log('file.name:', file.name);
-        
         // Remove extension and sanitize for use in download filename
         let fileNameWithoutExt = file.name || 'image';
         const lastDotIndex = fileNameWithoutExt.lastIndexOf('.');
@@ -499,32 +536,17 @@ function setupDragFunctionality() {
 // Download the token as PNG
 function downloadToken() {
     if (!currentTokenData) {
-        console.warn('Cannot download: no token data');
         return;
     }
     
     // Determine filename - always use token_ prefix
     let fileName = 'token.png';
-    
-    // Debug: Check what currentFileName actually is
-    console.log('DEBUG downloadToken - currentFileName:', currentFileName);
-    console.log('DEBUG downloadToken - typeof currentFileName:', typeof currentFileName);
-    console.log('DEBUG downloadToken - currentFileName value:', String(currentFileName));
-    
     if (currentFileName) {
         const cleanName = String(currentFileName).trim();
-        console.log('DEBUG downloadToken - cleanName:', cleanName);
         if (cleanName !== '' && cleanName !== 'null' && cleanName !== 'undefined') {
             fileName = `token_${cleanName}.png`;
-            console.log('DEBUG downloadToken - using custom filename:', fileName);
-        } else {
-            console.log('DEBUG downloadToken - cleanName was empty/null, using default');
         }
-    } else {
-        console.log('DEBUG downloadToken - currentFileName is falsy, using default');
     }
-    
-    console.log('DEBUG downloadToken - final fileName:', fileName);
     
     // Create blob URL for better browser compatibility
     const canvas = currentTokenData.canvas;
@@ -537,6 +559,7 @@ function downloadToken() {
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+            incrementTokensCreatedCount();
             return;
         }
         
@@ -547,6 +570,7 @@ function downloadToken() {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        incrementTokensCreatedCount();
         
         // Clean up the blob URL after a short delay
         setTimeout(() => URL.revokeObjectURL(url), 100);

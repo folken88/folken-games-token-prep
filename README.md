@@ -1,4 +1,4 @@
-# Folken Games Token Prep
+# TKN8R
 
 An automated web application that transforms images into RPG tokens for FoundryVTT and other tabletop RPG applications. Uses advanced face detection with eye distance and nose positioning to automatically crop the perfect token, then lets you fine-tune with intuitive drag and zoom controls.
 
@@ -12,6 +12,7 @@ An automated web application that transforms images into RPG tokens for FoundryV
 - **Smart Color Extraction**: Automatically extracts color schemes from the image to create matching borders
 - **Customizable Borders**: Choose from 8 border textures (Solid, Gradient, Metallic, Leather, Wood, Stone, Crystal, Glow) and 12 color swatches (Gold, Silver, Copper, Red, Blue, Green, Purple, Orange, White, Black, Bronze, Platinum)
 - **Border Thickness Control**: Toggle between thin (8px) and thick (16px) borders
+- **Tokens Created Counter**: Tracks how many tokens you’ve created (increments only when you download)
 - **Beautiful Default Borders**: Generates gradient borders that complement the image's color palette by default
 - **Drag & Drop Interface**: Simple, intuitive interface - just drag and drop your image
 - **High-Quality Output**: Generates 512x512 PNG tokens optimized for tabletop RPG applications
@@ -77,7 +78,7 @@ An automated web application that transforms images into RPG tokens for FoundryV
      - Use the "Auto" button to reset to auto-detected colors
      - Use the "Default" button to reset to gradient texture
 
-5. **Download Your Token**: Click the "Download Token" button to save your token as a PNG file
+5. **Download Your Token**: Click the "Download Token" button to save your token as a PNG file (download count increments here)
 
 6. **Process Another**: Click "Process Another" to create more tokens
 
