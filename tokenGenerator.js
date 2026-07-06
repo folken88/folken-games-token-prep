@@ -53,11 +53,40 @@ export function createToken(image, faceData, colorScheme, zoomAdjustment = 1.0, 
     const imageY = borderWidth;
     const imageSize = tokenSize - (borderWidth * 2);
     
-    ctx.drawImage(
-        image,
-        cropData.x, cropData.y, cropData.width, cropData.height,
-        imageX, imageY, imageSize, imageSize
-    );
+    // Handle crop that may extend beyond image bounds
+    // Use source coordinates if available, otherwise use regular coordinates
+    const sourceX = cropData.sourceX !== undefined ? cropData.sourceX : Math.max(0, cropData.x);
+    const sourceY = cropData.sourceY !== undefined ? cropData.sourceY : Math.max(0, cropData.y);
+    const sourceWidth = cropData.sourceWidth !== undefined ? cropData.sourceWidth : cropData.width;
+    const sourceHeight = cropData.sourceHeight !== undefined ? cropData.sourceHeight : cropData.height;
+    
+    // Calculate how much of the crop extends beyond image bounds
+    const offsetX = cropData.x < 0 ? -cropData.x : 0;
+    const offsetY = cropData.y < 0 ? -cropData.y : 0;
+    const extendRight = (cropData.x + cropData.width) > image.width ? (cropData.x + cropData.width) - image.width : 0;
+    const extendBottom = (cropData.y + cropData.height) > image.height ? (cropData.y + cropData.height) - image.height : 0;
+    
+    // Fill areas that extend beyond image bounds with transparent/background
+    if (offsetX > 0 || offsetY > 0 || extendRight > 0 || extendBottom > 0) {
+        // Fill extended areas (will show as transparent or border color)
+        ctx.fillStyle = 'transparent';
+        ctx.fillRect(imageX, imageY, imageSize, imageSize);
+    }
+    
+    // Draw the actual image portion
+    if (sourceWidth > 0 && sourceHeight > 0) {
+        // Calculate destination position accounting for offsets
+        const destX = imageX + (offsetX / cropData.width) * imageSize;
+        const destY = imageY + (offsetY / cropData.height) * imageSize;
+        const destWidth = imageSize * (sourceWidth / cropData.width);
+        const destHeight = imageSize * (sourceHeight / cropData.height);
+        
+        ctx.drawImage(
+            image,
+            sourceX, sourceY, sourceWidth, sourceHeight,
+            destX, destY, destWidth, destHeight
+        );
+    }
     
     ctx.restore();
     
@@ -120,13 +149,16 @@ function calculateCropArea(image, faceData, targetSize, zoomAdjustment = 1.0, cr
         centerY = faceData.noseTip.y + nosePositionFromTop - (cropHeight / 2);
     } else {
         // Fallback to face box method if landmarks not available
+        // Use a smaller initial crop for fallback to allow more zoom-in capability
         const faceCenterX = faceData.x + faceData.width / 2;
         const faceTop = faceData.y;
         
-        const expandUp = faceData.height * 3.5;
-        const expandDown = faceData.height * 0.3;
-        const expandLeft = faceData.width * 1.2;
-        const expandRight = faceData.width * 1.2;
+        // Start with a smaller crop area so users can zoom in much more
+        // This is especially important when face detection fails and we need to manually adjust
+        const expandUp = faceData.height * 2.5;      // Less room above (allows more zoom in)
+        const expandDown = faceData.height * 0.3;   // Less room below
+        const expandLeft = faceData.width * 1.0;     // Less room on sides
+        const expandRight = faceData.width * 1.0;
         
         const desiredHeight = expandUp + faceData.height + expandDown;
         const desiredWidth = expandLeft + faceData.width + expandRight;
@@ -156,15 +188,45 @@ function calculateCropArea(image, faceData, targetSize, zoomAdjustment = 1.0, cr
     let cropX = centerX - cropWidth / 2;
     let cropY = centerY - cropHeight / 2;
     
-    // Ensure we don't go outside image bounds
-    if (cropX < 0) cropX = 0;
-    if (cropY < 0) cropY = 0;
-    if (cropX + cropWidth > image.width) cropX = image.width - cropWidth;
-    if (cropY + cropHeight > image.height) cropY = image.height - cropHeight;
+    // Allow crop to extend beyond image bounds (with clamping) to enable more drag range
+    // This allows users to drag the crop further to reach subjects near edges
+    const maxOffset = Math.max(cropWidth, cropHeight) * 0.5; // Allow 50% extension beyond bounds
     
-    // Final adjustment: ensure we have valid dimensions
-    cropWidth = Math.min(cropWidth, image.width - cropX);
-    cropHeight = Math.min(cropHeight, image.height - cropY);
+    // Clamp to allow some extension beyond bounds for better adjustment range
+    if (cropX < -maxOffset) cropX = -maxOffset;
+    if (cropY < -maxOffset) cropY = -maxOffset;
+    if (cropX + cropWidth > image.width + maxOffset) cropX = image.width + maxOffset - cropWidth;
+    if (cropY + cropHeight > image.height + maxOffset) cropY = image.height + maxOffset - cropHeight;
+    
+    // Final adjustment: ensure we have valid dimensions (but allow some overflow for dragging)
+    const actualCropX = Math.max(-maxOffset, Math.min(cropX, image.width + maxOffset - cropWidth));
+    const actualCropY = Math.max(-maxOffset, Math.min(cropY, image.height + maxOffset - cropHeight));
+    
+    // Store the actual crop position (may extend beyond image bounds)
+    cropX = actualCropX;
+    cropY = actualCropY;
+    
+    // Calculate the actual source area we'll draw from (clamped to image bounds)
+    const sourceX = Math.max(0, cropX);
+    const sourceY = Math.max(0, cropY);
+    const sourceWidth = Math.min(cropWidth, image.width - sourceX);
+    const sourceHeight = Math.min(cropHeight, image.height - sourceY);
+    
+    // Ensure source dimensions are valid
+    const finalSourceWidth = Math.max(0, Math.min(sourceWidth, image.width - sourceX));
+    const finalSourceHeight = Math.max(0, Math.min(sourceHeight, image.height - sourceY));
+    
+    // Return both the logical crop position (for dragging) and the actual source area
+    return {
+        x: cropX,  // Logical position (may be negative, for dragging calculations)
+        y: cropY,  // Logical position (may be negative, for dragging calculations)
+        width: cropWidth,
+        height: cropHeight,
+        sourceX: sourceX,  // Actual source area in image (clamped to bounds)
+        sourceY: sourceY,
+        sourceWidth: finalSourceWidth,
+        sourceHeight: finalSourceHeight
+    };
     
     return {
         x: cropX,

@@ -119,13 +119,8 @@ async function init() {
 
 // Set up all event listeners
 function setupEventListeners() {
-    // Click to upload - prevent event bubbling
-    uploadArea.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        fileInput.click();
-    });
-    
+    // Click to browse: handled natively by <label for="fileInput"> wrapping the upload area
+
     // File input change
     fileInput.addEventListener('change', (e) => {
         if (e.target.files && e.target.files.length > 0) {
@@ -331,12 +326,17 @@ async function processImage(image) {
 // Fallback processing when face detection fails
 async function processImageFallback(image) {
     try {
-        // Use center of image as focus point
+        // Use center of image as focus point with smaller initial crop
+        // Start smaller so users can zoom in much more when face detection fails
+        const centerX = image.width * 0.5;
+        const centerY = image.height * 0.4; // Slightly above center for head positioning
+        const cropSize = Math.min(image.width, image.height) * 0.4; // 40% of smaller dimension (smaller = more zoom-in room)
+        
         const faceData = {
-            x: image.width * 0.25,
-            y: image.height * 0.25,
-            width: image.width * 0.5,
-            height: image.height * 0.5
+            x: centerX - cropSize * 0.3,
+            y: centerY - cropSize * 0.3,
+            width: cropSize * 0.6,
+            height: cropSize * 0.6
         };
         currentFaceData = faceData;
         
@@ -377,8 +377,8 @@ function handleZoomChange(e) {
         return;
     }
     
-    // Convert slider value (50-150) to zoom adjustment factor (0.5-1.5)
-    // 100 = 1.0 (no adjustment), 50 = 0.5 (zoom out 2x), 150 = 1.5 (zoom in 1.5x)
+    // Convert slider value (10-500) to zoom adjustment factor (0.1-5.0)
+    // 100 = 1.0 (no adjustment), 10 = 0.1 (zoom out 10x), 500 = 5.0 (zoom in 5x)
     const sliderValue = parseFloat(e.target.value);
     currentZoomAdjustment = sliderValue / 100;
     
@@ -512,7 +512,7 @@ function setupDragFunctionality() {
         // Determine zoom direction (negative deltaY = scroll up = zoom in)
         const zoomDelta = e.deltaY > 0 ? -5 : 5; // 5% per scroll step
         const currentSliderValue = parseFloat(zoomSlider.value);
-        const newSliderValue = Math.max(50, Math.min(150, currentSliderValue + zoomDelta));
+        const newSliderValue = Math.max(10, Math.min(500, currentSliderValue + zoomDelta));
         
         // Update slider
         zoomSlider.value = newSliderValue;
