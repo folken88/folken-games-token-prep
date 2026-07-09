@@ -1,0 +1,154 @@
+## Traefik dynamic config — TrueNAS rebuild (keep-list only)
+## Backends reach host-published ports via host.docker.internal
+## (compose adds host-gateway mapping). Pruned from the old box config:
+## removed website backend, amp, wap, tarkov, surgery, ha, resume-chat.
+
+http:
+  routers:
+    foundry-f1:
+      rule: "Host(`f1.folkengames.com`)"
+      service: foundry-f1
+      entryPoints: [websecure]
+      tls: { certResolver: letsencrypt }
+    foundry-f2:
+      rule: "Host(`f2.folkengames.com`)"
+      service: foundry-f2
+      entryPoints: [websecure]
+      tls: { certResolver: letsencrypt }
+    foundry-f3:
+      rule: "Host(`f3.folkengames.com`)"
+      service: foundry-f3
+      entryPoints: [websecure]
+      tls: { certResolver: letsencrypt }
+    foundry-f4:
+      rule: "Host(`f4.folkengames.com`)"
+      service: foundry-f4
+      entryPoints: [websecure]
+      tls: { certResolver: letsencrypt }
+    foundry-f5:
+      rule: "Host(`f5.folkengames.com`)"
+      service: foundry-f5
+      entryPoints: [websecure]
+      tls: { certResolver: letsencrypt }
+
+    jellyfin:
+      rule: "Host(`jellyfin.folkengames.com`)"
+      service: jellyfin
+      entryPoints: [websecure]
+      tls: { certResolver: letsencrypt }
+
+    token:
+      rule: "Host(`token.folkengames.com`)"
+      service: token
+      entryPoints: [websecure]
+      tls: { certResolver: letsencrypt }
+
+    bird:
+      rule: "Host(`bird.folkengames.com`)"
+      service: bird
+      entryPoints: [websecure]
+      tls: { certResolver: letsencrypt }
+
+    poker:
+      rule: "Host(`poker.folkengames.com`)"
+      service: poker
+      entryPoints: [websecure]
+      tls: { certResolver: letsencrypt }
+    poker-http:
+      rule: "Host(`poker.folkengames.com`)"
+      service: poker
+      entryPoints: [web]
+      middlewares: [https-redirect]
+
+    wap:
+      rule: "Host(`wap.folkengames.com`)"
+      service: wap
+      entryPoints: [websecure]
+      tls: { certResolver: letsencrypt }
+
+    # surgery.folkengames.com — game hub at /, games under paths (single domain)
+    surgery-tools:
+      rule: "Host(`surgery.folkengames.com`) && PathPrefix(`/tools`)"
+      service: surgery-tools
+      entryPoints: [websecure]
+      middlewares: [surgery-tools-strip]
+      tls: { certResolver: letsencrypt }
+      priority: 200
+    surgery-hub:
+      rule: "Host(`surgery.folkengames.com`)"
+      service: surgery-hub
+      entryPoints: [websecure]
+      tls: { certResolver: letsencrypt }
+      priority: 100
+    surgery-http:
+      rule: "Host(`surgery.folkengames.com`)"
+      service: surgery-hub
+      entryPoints: [web]
+      middlewares: [https-redirect]
+
+    # Apex folkengames.com -> Linktree (no backend; redirect fires first)
+    folkengames:
+      rule: "Host(`folkengames.com`)"
+      service: token
+      entryPoints: [websecure]
+      tls: { certResolver: letsencrypt }
+      middlewares: [linktree-redirect]
+      priority: 100
+    folkengames-http:
+      rule: "Host(`folkengames.com`)"
+      service: token
+      entryPoints: [web]
+      middlewares: [linktree-redirect]
+      priority: 100
+
+  services:
+    foundry-f1:
+      loadBalancer:
+        servers: [{ url: "http://host.docker.internal:30000" }]
+    foundry-f2:
+      loadBalancer:
+        servers: [{ url: "http://host.docker.internal:30001" }]
+    foundry-f3:
+      loadBalancer:
+        servers: [{ url: "http://host.docker.internal:30002" }]
+    foundry-f4:
+      loadBalancer:
+        servers: [{ url: "http://host.docker.internal:30003" }]
+    foundry-f5:
+      loadBalancer:
+        servers: [{ url: "http://host.docker.internal:30004" }]
+    jellyfin:
+      loadBalancer:
+        servers: [{ url: "http://host.docker.internal:8096" }]
+    token:
+      loadBalancer:
+        servers: [{ url: "http://host.docker.internal:5001" }]
+    bird:
+      loadBalancer:
+        servers: [{ url: "http://host.docker.internal:32085" }]
+    poker:
+      loadBalancer:
+        servers: [{ url: "http://host.docker.internal:32086" }]
+    wap:
+      loadBalancer:
+        servers: [{ url: "http://host.docker.internal:32080" }]
+    surgery-hub:
+      loadBalancer:
+        servers: [{ url: "http://host.docker.internal:5002" }]
+    surgery-tools:
+      loadBalancer:
+        servers: [{ url: "http://host.docker.internal:32083" }]
+
+  middlewares:
+    https-redirect:
+      redirectScheme:
+        scheme: https
+        permanent: true
+    surgery-tools-strip:
+      stripPrefix:
+        prefixes: ["/tools"]
+    linktree-redirect:
+      redirectRegex:
+        regex: ".*"
+        replacement: "https://linktr.ee/folken88"
+        permanent: false
