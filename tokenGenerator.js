@@ -4,7 +4,7 @@
  */
 
 import { generateBorder, colorToCSS } from './colorUtils.js';
-import { getTextureDefinition, BORDER_TEXTURES } from './borderStyles.js';
+import { getTextureDefinition, BORDER_TEXTURES } from './borderStyles.js?v=1.5';
 
 /**
  * Create a token from an image with face detection and color-based border

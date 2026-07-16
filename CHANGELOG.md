@@ -21,3 +21,8 @@
 - Improved drag-and-drop handling to support dropping new images on preview area
 - Enhanced filename sanitization for safe download filenames
 - Added backend API (`/api/tokens/*`) with persisted storage in `tokens.json` (Docker volume)
+
+## 1.1.0
+- Added 12 dark-metallic border colors (Gunmetal, Blued Steel, Wrought Iron, Graphite, Pewter, Dark Bronze, Antique Copper, Antique Brass, Verdigris, Rusted Iron, Obsidian, Onyx).
+- Added 4 metal border textures: Brushed, Hammered, Patina, Damascus.
+- Cache-busters bumped to v=1.5.

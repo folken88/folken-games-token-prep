@@ -6,8 +6,8 @@
 
 import { detectFace, loadFaceApiModels } from './faceDetection.js';
 import { extractColorScheme, generateBorder } from './colorUtils.js';
-import { createToken } from './tokenGenerator.js';
-import { COLOR_SWATCHES, BORDER_TEXTURES } from './borderStyles.js';
+import { createToken } from './tokenGenerator.js?v=1.5';
+import { COLOR_SWATCHES, BORDER_TEXTURES } from './borderStyles.js?v=1.5';
 
 // DOM Elements
 const uploadArea = document.getElementById('uploadArea');
@@ -639,6 +639,10 @@ function initializeBorderCustomization() {
             [BORDER_TEXTURES.SOLID]: 'Solid',
             [BORDER_TEXTURES.GRADIENT]: 'Gradient',
             [BORDER_TEXTURES.METALLIC]: 'Metallic',
+            [BORDER_TEXTURES.BRUSHED]: 'Brushed',
+            [BORDER_TEXTURES.HAMMERED]: 'Hammered',
+            [BORDER_TEXTURES.PATINA]: 'Patina',
+            [BORDER_TEXTURES.DAMASCUS]: 'Damascus',
             [BORDER_TEXTURES.LEATHER]: 'Leather',
             [BORDER_TEXTURES.WOOD]: 'Wood',
             [BORDER_TEXTURES.STONE]: 'Stone',
