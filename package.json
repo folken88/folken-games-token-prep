@@ -1,6 +1,6 @@
 {
   "name": "folken-games-token-prep",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Automated RPG token generator that detects faces and creates styled tokens",
   "main": "index.html",
   "scripts": {

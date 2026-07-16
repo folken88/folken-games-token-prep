@@ -26,3 +26,8 @@
 - Added 12 dark-metallic border colors (Gunmetal, Blued Steel, Wrought Iron, Graphite, Pewter, Dark Bronze, Antique Copper, Antique Brass, Verdigris, Rusted Iron, Obsidian, Onyx).
 - Added 4 metal border textures: Brushed, Hammered, Patina, Damascus.
 - Cache-busters bumped to v=1.5.
+
+## 1.1.1
+- Layout: swatch pickers are now compact grids beside the preview canvas
+  instead of one long column each - colors 4-wide, textures 3-wide. Page no
+  longer scrolls forever after the dark-metallic additions.

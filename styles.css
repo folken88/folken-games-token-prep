@@ -215,11 +215,18 @@ header,
 }
 
 .swatch-container {
-    display: flex;
-    flex-direction: column;
+    /* Compact grid — a single column made the page ~1000px tall once the
+       dark-metallic swatches landed. Colors run 4-wide (24 → 6 rows),
+       textures 3-wide (12 → 4 rows), both shorter than the preview canvas. */
+    display: grid;
+    grid-template-columns: repeat(4, 32px);
     gap: 8px;
-    align-items: center;
-    max-width: 80px;
+    justify-content: center;
+    max-width: none;
+}
+
+.texture-swatches .swatch-container {
+    grid-template-columns: repeat(3, 32px);
 }
 
 .color-swatch,
@@ -559,7 +566,10 @@ footer {
         width: 100%;
     }
 
-    .swatch-container {
+    .swatch-container,
+    .texture-swatches .swatch-container {
+        /* Stacked layout: let swatches flow as wide as the screen allows */
+        grid-template-columns: repeat(auto-fit, 32px);
         max-width: 100%;
         justify-content: center;
     }
