@@ -5,7 +5,7 @@
  */
 
 import { detectFace, loadFaceApiModels } from './faceDetection.js';
-import { extractColorScheme, generateBorder } from './colorUtils.js';
+import { extractColorScheme, generateBorder, extractPalette } from './colorUtils.js?v=1.7';
 import { createToken } from './tokenGenerator.js?v=1.5';
 import { COLOR_SWATCHES, BORDER_TEXTURES } from './borderStyles.js?v=1.5';
 
@@ -31,6 +31,7 @@ let currentImage = null;
 let currentTokenData = null;
 let currentFaceData = null;
 let currentColorScheme = null;
+let currentArtPalette = []; // dominant colors extracted from the loaded art
 let currentZoomAdjustment = 1.0;
 let currentCropOffset = {x: 0, y: 0};
 let isDragging = false;
@@ -292,6 +293,9 @@ async function processImage(image) {
         // Extract color scheme from the image
         const colorScheme = extractColorScheme(image, faceData);
         currentColorScheme = colorScheme;
+        // Seed the swatches from this art's dominant colors (user can override).
+        currentArtPalette = extractPalette(image, 10);
+        renderColorSwatches();
         
         // Reset zoom and offset to default
         currentZoomAdjustment = 1.0;
@@ -343,6 +347,9 @@ async function processImageFallback(image) {
         // Extract color scheme
         const colorScheme = extractColorScheme(image, faceData);
         currentColorScheme = colorScheme;
+        // Seed the swatches from this art's dominant colors (user can override).
+        currentArtPalette = extractPalette(image, 10);
+        renderColorSwatches();
         
         // Reset zoom and offset to default
         currentZoomAdjustment = 1.0;
@@ -595,6 +602,8 @@ function resetApp() {
     currentTokenData = null;
     currentFaceData = null;
     currentColorScheme = null;
+    currentArtPalette = [];
+    renderColorSwatches();
     currentZoomAdjustment = 1.0;
     currentCropOffset = {x: 0, y: 0};
     currentBorderOptions = { texture: BORDER_TEXTURES.GRADIENT, customColor: null, borderWidth: 8 };
@@ -608,26 +617,61 @@ function resetApp() {
 }
 
 // Initialize border customization UI
+/** Convert '#rrggbb' → {r,g,b}. */
+function hexToRgb(hex) {
+    const m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex);
+    return m ? { r: parseInt(m[1], 16), g: parseInt(m[2], 16), b: parseInt(m[3], 16) } : { r: 255, g: 255, b: 255 };
+}
+/** Convert {r,g,b} → '#rrggbb'. */
+function rgbToHex(c) {
+    return '#' + ['r', 'g', 'b'].map(k => Math.max(0, Math.min(255, Math.round(c[k] || 0))).toString(16).padStart(2, '0')).join('');
+}
+
+/** Build one clickable color swatch button. */
+function makeColorSwatch(color, title, extraClass) {
+    const el = document.createElement('button');
+    el.className = 'color-swatch' + (extraClass ? ' ' + extraClass : '');
+    el.style.backgroundColor = `rgb(${color.r}, ${color.g}, ${color.b})`;
+    el.title = title;
+    el.setAttribute('aria-label', `Select ${title} color`);
+    el.addEventListener('click', () => selectBorderColor({ r: color.r, g: color.g, b: color.b }));
+    return el;
+}
+
+/**
+ * (Re)build the color-swatch strip. Order: exact-color picker, then colors
+ * pulled from the loaded art (so they match), then the curated presets.
+ */
+function renderColorSwatches() {
+    const el = document.getElementById('colorSwatches');
+    if (!el) { console.warn('Color swatches container not found'); return; }
+    el.innerHTML = '';
+
+    // 1) Exact-color picker — a native <input type=color> styled as a chip.
+    const pick = document.createElement('label');
+    pick.className = 'color-swatch custom-color-chip';
+    pick.title = 'Pick any exact color';
+    const input = document.createElement('input');
+    input.type = 'color';
+    input.value = currentBorderOptions.customColor ? rgbToHex(currentBorderOptions.customColor) : '#8a6d3b';
+    input.addEventListener('input', (e) => selectBorderColor(hexToRgb(e.target.value)));
+    pick.appendChild(input);
+    el.appendChild(pick);
+
+    // 2) Colors sampled from the current art (empty until an image loads).
+    (currentArtPalette || []).forEach((c, i) => {
+        el.appendChild(makeColorSwatch(c, `From art ${i + 1}`, 'art-swatch'));
+    });
+
+    // 3) Curated presets (brights + dark metallics).
+    COLOR_SWATCHES.forEach((s) => {
+        el.appendChild(makeColorSwatch(s, s.name, 'preset-swatch'));
+    });
+}
+
 function initializeBorderCustomization() {
-    // Initialize color swatches
-    const colorSwatchesEl = document.getElementById('colorSwatches');
-    if (colorSwatchesEl) {
-        // Clear any existing swatches
-        colorSwatchesEl.innerHTML = '';
-        
-        COLOR_SWATCHES.forEach((swatch, index) => {
-            const swatchEl = document.createElement('button');
-            swatchEl.className = 'color-swatch';
-            swatchEl.style.backgroundColor = `rgb(${swatch.r}, ${swatch.g}, ${swatch.b})`;
-            swatchEl.title = swatch.name;
-            swatchEl.setAttribute('data-color-index', index);
-            swatchEl.setAttribute('aria-label', `Select ${swatch.name} color`);
-            swatchEl.addEventListener('click', () => selectBorderColor(swatch));
-            colorSwatchesEl.appendChild(swatchEl);
-        });
-    } else {
-        console.warn('Color swatches container not found');
-    }
+    // Initialize color swatches (picker + art palette + presets)
+    renderColorSwatches();
     
     // Initialize texture swatches
     const textureSwatchesEl = document.getElementById('textureSwatches');

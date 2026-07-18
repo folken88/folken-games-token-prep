@@ -215,18 +215,63 @@ header,
 }
 
 .swatch-container {
-    /* Compact grid — a single column made the page ~1000px tall once the
-       dark-metallic swatches landed. Colors run 4-wide (24 → 6 rows),
-       textures 3-wide (12 → 4 rows), both shorter than the preview canvas. */
+    /* Compact grid — a single column made the page far too tall once the
+       dark-metallic swatches landed. Colors run 6-wide, textures 3-wide,
+       both shorter than the preview canvas. */
     display: grid;
-    grid-template-columns: repeat(4, 32px);
-    gap: 8px;
+    grid-template-columns: repeat(6, 30px);
+    gap: 6px;
     justify-content: center;
     max-width: none;
 }
 
 .texture-swatches .swatch-container {
     grid-template-columns: repeat(3, 32px);
+    gap: 8px;
+}
+
+/* Color chips slightly smaller than texture chips (which carry text labels). */
+.color-swatches .color-swatch {
+    width: 30px;
+    height: 30px;
+    border-radius: 5px;
+}
+
+/* Exact-color picker chip: a rainbow tile wrapping a hidden native input. */
+.custom-color-chip {
+    background: conic-gradient(from 0deg, #ff4d4d, #ffd24d, #4dff88, #4dd2ff, #4d4dff, #d24dff, #ff4d4d);
+    padding: 0;
+    position: relative;
+    overflow: hidden;
+}
+.custom-color-chip::after {
+    content: '✎';
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+    pointer-events: none;
+}
+.custom-color-chip input[type="color"] {
+    position: absolute;
+    inset: -6px;
+    width: calc(100% + 12px);
+    height: calc(100% + 12px);
+    border: none;
+    padding: 0;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+    background: none;
+}
+
+/* Art-derived swatches get a subtle inner ring so they read as "from your art". */
+.art-swatch {
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.4);
 }
 
 .color-swatch,

@@ -31,3 +31,10 @@
 - Layout: swatch pickers are now compact grids beside the preview canvas
   instead of one long column each - colors 4-wide, textures 3-wide. Page no
   longer scrolls forever after the dark-metallic additions.
+
+## 1.2.0
+- Border color swatches are now seeded from the loaded art's dominant colors
+  (extractPalette) so borders match the token; curated presets kept as fallback.
+- Added an exact-color picker chip (native color input) to choose any color.
+- Denser 6-wide color grid (was 4); art swatches marked with an inner ring.
+- Cache-busters: app.js/styles v=1.7, colorUtils v=1.7.

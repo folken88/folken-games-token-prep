@@ -132,3 +132,48 @@ export function generateBorder(colorScheme) {
 export function colorToCSS(color) {
     return `rgb(${Math.round(color.r)}, ${Math.round(color.g)}, ${Math.round(color.b)})`;
 }
+
+/**
+ * Extract a palette of the most dominant, visually-distinct colors from an
+ * image — used to seed the border-color swatches so they match the art.
+ * @param {HTMLImageElement} image
+ * @param {number} count - max colors to return
+ * @returns {Array<{r,g,b}>}
+ */
+export function extractPalette(image, count = 10) {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    // Downscale for speed — a ~160px thumbnail is plenty for dominant colors.
+    const scale = Math.min(1, 160 / Math.max(image.width, image.height, 1));
+    canvas.width = Math.max(1, Math.round(image.width * scale));
+    canvas.height = Math.max(1, Math.round(image.height * scale));
+    ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+    const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+
+    // Histogram: bucket colors to 5 bits/channel, accumulate averages + counts.
+    const bins = new Map();
+    for (let i = 0; i < data.length; i += 4) {
+        if (data[i + 3] < 128) continue; // skip transparent
+        const r = data[i], g = data[i + 1], b = data[i + 2];
+        const key = ((r >> 3) << 10) | ((g >> 3) << 5) | (b >> 3);
+        const e = bins.get(key);
+        if (e) { e.r += r; e.g += g; e.b += b; e.n++; }
+        else bins.set(key, { r, g, b, n: 1 });
+    }
+
+    const list = [...bins.values()]
+        .map(e => ({ r: Math.round(e.r / e.n), g: Math.round(e.g / e.n), b: Math.round(e.b / e.n), n: e.n }))
+        .sort((a, b) => b.n - a.n);
+
+    // Greedily take the most populous colors that are distinct enough from
+    // those already chosen (avoids ten near-identical browns).
+    const picked = [];
+    const minDist = 46;
+    for (const c of list) {
+        if (picked.length >= count) break;
+        if (picked.every(p => Math.hypot(p.r - c.r, p.g - c.g, p.b - c.b) >= minDist)) {
+            picked.push({ r: c.r, g: c.g, b: c.b });
+        }
+    }
+    return picked;
+}
