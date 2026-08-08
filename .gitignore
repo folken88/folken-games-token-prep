@@ -1,21 +1,52 @@
-# Dependencies
-node_modules/
+# This repo (TKN8R) lives at the HOME DIRECTORY root, so git was scanning the
+# entire Windows user profile (~600k files) on every status/diff — which made
+# the Claude desktop app hang, balloon in memory, and botch its auto-updates.
+# Fix: ignore everything by default, re-include only what this project tracks.
 
-# Logs
+/*
+
+# --- project files at repo root ---
+!/.gitignore
+!/.dockerignore
+!/CHANGELOG.md
+!/Dockerfile
+!/README.md
+!/START_HERE.md
+!/app.js
+!/borderStyles.js
+!/colorUtils.js
+!/docker-compose.yml
+!/faceDetection.js
+!/index.html
+!/logo_tkn8r.png
+!/nginx.conf
+!/package.json
+!/styles.css
+!/tokenGenerator.js
+!/token_thumbnail.jpg
+
+# --- project directories ---
+!/backend/
+
+# --- single tracked file deep in Documents (traefik route config) ---
+!/Documents/
+/Documents/*
+!/Documents/_truenas_build/
+/Documents/_truenas_build/*
+!/Documents/_truenas_build/stacks/
+/Documents/_truenas_build/stacks/*
+!/Documents/_truenas_build/stacks/traefik/
+
+# --- standard project ignores (apply inside re-included dirs) ---
+node_modules/
 *.log
 npm-debug.log*
-
-# OS files
 .DS_Store
 Thumbs.db
-
-# IDE
 .vscode/
 .idea/
 *.swp
 *.swo
-
-# Temporary files
 *.tmp
 *.temp
 tokens.json
